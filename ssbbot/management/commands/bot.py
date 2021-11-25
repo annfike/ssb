@@ -4,10 +4,16 @@ from ssbbot.models import Profile, Stuff
 import logging
 import os
 import re
-os.environ["DJANGO_ALLOW_ASYNC_UNSAFE"] = "true"
+
 from aiogram import Bot, Dispatcher, executor, types
 from dotenv import load_dotenv
 import aiogram.utils.markdown as fmt
+import time
+from datetime import date, timedelta
+from pytimeparse import parse
+import pyqrcode
+
+os.environ["DJANGO_ALLOW_ASYNC_UNSAFE"] = "true"
 
 logging.basicConfig(level=logging.INFO)
 load_dotenv()
@@ -297,17 +303,17 @@ async def choice_month(call: types.CallbackQuery):
 async def registration(call: types.CallbackQuery):
     await bot.delete_message(call.from_user.id, call.message.message_id)
     user = call.message["chat"]["first_name"]
-    user_id = call.message["chat"]["id"]
     try:
-        Profile.objects.get(external_id=user_id)
+        Profile.objects.get(external_id=call.from_user.id)
         buttons = [
         types.InlineKeyboardButton(
-            text="Оплатить", callback_data='ok')
+            text="Оплатить", callback_data='Оплатить')
         ]
         keyboard = types.InlineKeyboardMarkup(resize_keyboard=True)
         keyboard.add(*buttons)
         await call.message.answer(f' {user}, вы уже у нас зарегистрированы, рады видеть вас снова! '
                 ' Для оплаты нажмите кнопку ниже:', reply_markup=keyboard)
+        await call.answer()
     except:
         await call.message.answer(f' {user}, вы у нас впервые? Давайте зарегистрируемся. ')
         profile = Profile.objects.get_or_create(external_id=user_id)
@@ -315,6 +321,41 @@ async def registration(call: types.CallbackQuery):
         profile.first_name = user or ''
         profile.save()
         
+        await call.answer()
+
+
+@ dp.callback_query_handler(text='Оплатить')
+async def send_qrcode(call: types.CallbackQuery):
+    url=pyqrcode.create(call.message.message_id)
+    timestr = time.strftime("%Y%m%d-%H%M%S")
+    filename = f'{call.message.message_id}_{timestr}.png'
+    images_dir = os.path.join(os.getcwd(), 'QR')
+    os.makedirs(images_dir, exist_ok=True)
+    filepath = os.path.join(images_dir, filename)
+    url.png(filepath,scale=15)
+    profile=Profile.objects.get(external_id=call.from_user.id)
+    today = date.today()
+    storage_date_end = today + timedelta(days=user_data['period_days'])
+    storage_date_end = storage_date_end.strftime("%d.%m.%Y")
+    storage_date_start = today.strftime("%d.%m.%Y")
+    quantity = user_data['quantity']
+    quantity = re.findall(r'\d+', quantity)[0]
+    stuff = Stuff.objects.create(
+    profile=profile,
+    storage=user_data['adress'],
+    description=user_data['item'],
+    quantity=quantity,
+    period=f'{storage_date_start}-{storage_date_end}',
+    price=user_data['total_price'],
+    code=filename,
+    )
+    stuff.save()
+
+    await call.message.answer('Заказ создан и успешно оплачен!'
+            ' Вот ваш электронный ключ для доступа к вашему личному складу. '
+            f'Вы сможете попасть на склад в любое время в период с {storage_date_start} по {storage_date_end}')
+    photo = open(filepath, 'rb')
+    await bot.send_photo(chat_id=call.message.chat.id, photo=photo)
     await call.answer()
 
 
