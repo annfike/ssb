@@ -258,9 +258,11 @@ async def choice_month(call: types.CallbackQuery):
     else:
         price_one_month = ((int(*size) - 1) * 150) + 599
     total_price = price_one_month * int(*month)
-    period_days = int(*month)*31
+    period_days = int(*month)*30.5
     user_data['period_days'] = period_days
     user_data['total_price'] = total_price
+    user_data['quantity'] = size[0]
+    user_data['item'] = 'другое'
 
     buttons = [
         types.InlineKeyboardButton(
@@ -311,12 +313,13 @@ async def registration(call: types.CallbackQuery):
 
 @ dp.callback_query_handler(text='Оплатить')
 async def send_qrcode(call: types.CallbackQuery):
-    url=pyqrcode.create(call.message.message_id)
     timestr = time.strftime("%Y%m%d-%H%M%S")
-    filename = f'{call.message.message_id}_{timestr}.png'
+    filename = f'{call.message.chat.id}_{timestr}.png'
     images_dir = os.path.join(os.getcwd(), 'QR')
     os.makedirs(images_dir, exist_ok=True)
     filepath = os.path.join(images_dir, filename)
+    code = f'{timestr}_{call.message.chat.id}_'
+    url=pyqrcode.create(code)
     url.png(filepath,scale=15)
     profile=Profile.objects.get(external_id=call.from_user.id)
     today = date.today()
