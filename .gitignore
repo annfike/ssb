@@ -81,6 +81,30 @@ target/
 # IPython
 profile_default/
 ipython_config.py
+.idea/
+.vscode/
+*.sw*
+*.iml
+# The file containing environment variables
+**/venv
+
+# Ignore Logs
+logs.
+
+
+# other
+lesson_api/less_1/probe.py
+__pycache__
+Thumbs.db
+.DS_Store
+probe.py
+probe2.py
+bot_project.py
+
+# config  files
+auth.py
+config.py
+*.env
 
 # pyenv
 #   For a library or package, you might want to ignore these files since the code is
