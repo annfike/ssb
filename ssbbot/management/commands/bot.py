@@ -33,12 +33,7 @@ async def cmd_start(message: types.Message):
     await message.answer('Выберите адрес склада:', reply_markup=keyboard)
 
 
-@dp.message_handler(text="метро Анино")
-@dp.message_handler(text="метро Китай-Город")
-@dp.message_handler(text="метро ВДНХ")
-@dp.message_handler(text="метро Митино")
-@dp.message_handler(text="метро Спартак")
-@dp.message_handler(text="метро Сокол")
+@dp.message_handler(text_contains="метро")
 async def sklad_1_answer(message: types.Message):
 
     #print(message["chat"]) #{"id": 110968809, "first_name": "Anna", "username": "annfike", "type": "private"}
@@ -251,7 +246,7 @@ async def send_msg_other(call: types.CallbackQuery):
     keyboard = types.InlineKeyboardMarkup(row_width=3, resize_keyboard=True)
     buttons = [
         types.InlineKeyboardButton(
-            text=f'{cell} кв м', callback_data=f'{cell}') for cell in range(1, 11)
+            text=f'{cell} кв м', callback_data=f'{cell}w') for cell in range(1, 11)
     ]
     keyboard.add(*buttons)
     await bot.delete_message(call.from_user.id, call.message.message_id)
@@ -259,16 +254,7 @@ async def send_msg_other(call: types.CallbackQuery):
     await call.answer()
 
 
-@ dp.callback_query_handler(text='1')
-@ dp.callback_query_handler(text='2')
-@ dp.callback_query_handler(text='3')
-@ dp.callback_query_handler(text='4')
-@ dp.callback_query_handler(text='5')
-@ dp.callback_query_handler(text='6')
-@ dp.callback_query_handler(text='7')
-@ dp.callback_query_handler(text='8')
-@ dp.callback_query_handler(text='9')
-@ dp.callback_query_handler(text='10')
+@ dp.callback_query_handler(text_contains='w')
 async def send_date(call: types.CallbackQuery):
     user_data['size_cell'] = call.data
     buttons = [
@@ -282,25 +268,15 @@ async def send_date(call: types.CallbackQuery):
     await call.answer()
 
 
-@ dp.callback_query_handler(text='1a')
-@ dp.callback_query_handler(text='2a')
-@ dp.callback_query_handler(text='3a')
-@ dp.callback_query_handler(text='4a')
-@ dp.callback_query_handler(text='5a')
-@ dp.callback_query_handler(text='6a')
-@ dp.callback_query_handler(text='7a')
-@ dp.callback_query_handler(text='8a')
-@ dp.callback_query_handler(text='9a')
-@ dp.callback_query_handler(text='10a')
-@ dp.callback_query_handler(text='11a')
-@ dp.callback_query_handler(text='12a')
+@ dp.callback_query_handler(text_contains='a')
 async def choice_month(call: types.CallbackQuery):
     user_data['rent'] = call.data
     month = re.findall(r'\d+', call.data)
-    if user_data["size_cell"] == "1":
+    size = re.findall(r'\d+', user_data['size_cell'])
+    if size == "1":
         price_one_month = 599
     else:
-        price_one_month = ((int(user_data['size_cell']) - 1) * 150) + 599
+        price_one_month = ((int(*size) - 1) * 150) + 599
     total_price = price_one_month * int(*month)
     buttons = [
         types.InlineKeyboardButton(
@@ -312,10 +288,10 @@ async def choice_month(call: types.CallbackQuery):
     await call.message.answer(
         fmt.text(
             fmt.text(fmt.hunderline("Вы выбрали:")),
-            fmt.text(f"\nРазмер ячейки:   {user_data['size_cell']} кв м"),
+            fmt.text(f"\nРазмер ячейки:   {int(*size)} кв м"),
             fmt.text(f"\nСрок аренды:   {int(*month)} месяцев"),
             fmt.text(f"\nПо адресу:   {user_data['adress']}"),
-            fmt.text(f"\nСтоимость итого:   {total_price} рублей"), sep="\n"
+            fmt.text(f"\nСтоимость итого:   {total_price} рублей"), sep="\n",
         ), reply_markup=keyboard)
     await call.answer()
 
