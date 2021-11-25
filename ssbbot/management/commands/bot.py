@@ -29,30 +29,31 @@ async def cmd_start(message: types.Message):
         "метро Сокол",
     ]
     keyboard.add(*buttons)
+    await bot.delete_message(message.from_user.id, message.message_id)
     await message.answer('Выберите адрес склада:', reply_markup=keyboard)
 
 
-@dp.message_handler(lambda message: message.text == "метро Анино")
-@dp.message_handler(lambda message: message.text == "метро Китай-Город")
-@dp.message_handler(lambda message: message.text == "метро ВДНХ")
-@dp.message_handler(lambda message: message.text == "метро Митино")
-@dp.message_handler(lambda message: message.text == "метро Спартак")
-@dp.message_handler(lambda message: message.text == "метро Сокол")
+@dp.message_handler(text="метро Анино")
+@dp.message_handler(text="метро Китай-Город")
+@dp.message_handler(text="метро ВДНХ")
+@dp.message_handler(text="метро Митино")
+@dp.message_handler(text="метро Спартак")
+@dp.message_handler(text="метро Сокол")
 async def sklad_1_answer(message: types.Message):
     user_data['adress'] = message.text
-
+    keyboard = types.InlineKeyboardMarkup(row_width=2, resize_keyboard=True)
     buttons = [
         types.InlineKeyboardButton(text='сезонные вещи', callback_data='сезонные вещи'),
         types.InlineKeyboardButton(text='другое', callback_data='другое')
                ]
-    keyboard = types.InlineKeyboardMarkup(row_width=2, resize_keyboard=True)
     keyboard.add(*buttons)
-
+    await bot.delete_message(message.from_user.id, message.message_id)
     await message.answer("Что хотите хранить?:", reply_markup=keyboard)
 
 
 @dp.callback_query_handler(text='сезонные вещи')
 async def send_msg(call: types.CallbackQuery):
+    await bot.delete_message(call.from_user.id, call.message.message_id)
     await call.message.answer('yyy', reply_markup=types.ReplyKeyboardRemove())
     await call.answer()
 
@@ -66,13 +67,13 @@ async def send_msg_other(call: types.CallbackQuery):
         ),
         reply_markup=types.ReplyKeyboardRemove()
     )
+    keyboard = types.InlineKeyboardMarkup(row_width=3, resize_keyboard=True)
     buttons = [
         types.InlineKeyboardButton(
             text=f'{cell} кв м', callback_data=f'{cell}') for cell in range(1, 11)
     ]
-
-    keyboard = types.InlineKeyboardMarkup(row_width=3, resize_keyboard=True)
     keyboard.add(*buttons)
+    await bot.delete_message(call.from_user.id, call.message.message_id)
     await call.message.answer("Выберите размер ячейки:", reply_markup=keyboard)
     await call.answer()
 
@@ -95,6 +96,7 @@ async def send_date(call: types.CallbackQuery):
     ]
     keyboard = types.InlineKeyboardMarkup(row_width=4, resize_keyboard=True)
     keyboard.add(*buttons)
+    await bot.delete_message(call.from_user.id, call.message.message_id)
     await call.message.answer("Выберите срок аренды:", reply_markup=keyboard)
     await call.answer()
 
@@ -125,6 +127,7 @@ async def choice_month(call: types.CallbackQuery):
     ]
     keyboard = types.InlineKeyboardMarkup(resize_keyboard=True)
     keyboard.add(*buttons)
+    await bot.delete_message(call.from_user.id, call.message.message_id)
     await call.message.answer(
         fmt.text(
             fmt.text(fmt.hunderline("Вы выбрали:")),
@@ -138,6 +141,7 @@ async def choice_month(call: types.CallbackQuery):
 
 @ dp.callback_query_handler(text='ok')
 async def registration(call: types.CallbackQuery):
+    await bot.delete_message(call.from_user.id, call.message.message_id)
     await call.message.answer('хз', reply_markup=types.ReplyKeyboardRemove())
     await call.answer()
 
