@@ -68,7 +68,7 @@ async def send_msg_other(call: types.CallbackQuery):
     )
     buttons = [
         types.InlineKeyboardButton(
-            text=f'ячейка {cell} кв м', callback_data=f'{cell}') for cell in [1, 3, 6, 10]
+            text=f'{cell} кв м', callback_data=f'{cell}') for cell in range(1, 11)
     ]
 
     keyboard = types.InlineKeyboardMarkup(row_width=3, resize_keyboard=True)
@@ -78,14 +78,20 @@ async def send_msg_other(call: types.CallbackQuery):
 
 
 @ dp.callback_query_handler(text='1')
+@ dp.callback_query_handler(text='2')
 @ dp.callback_query_handler(text='3')
+@ dp.callback_query_handler(text='4')
+@ dp.callback_query_handler(text='5')
 @ dp.callback_query_handler(text='6')
+@ dp.callback_query_handler(text='7')
+@ dp.callback_query_handler(text='8')
+@ dp.callback_query_handler(text='9')
 @ dp.callback_query_handler(text='10')
 async def send_date(call: types.CallbackQuery):
     user_data['size_cell'] = call.data
     buttons = [
         types.InlineKeyboardButton(
-            text=f"{month} мес", callback_data=f"{month}a") for month in range(1, 11)
+            text=f"{month} мес", callback_data=f"{month}a") for month in range(1, 13)
     ]
     keyboard = types.InlineKeyboardMarkup(row_width=4, resize_keyboard=True)
     keyboard.add(*buttons)
