@@ -4,7 +4,7 @@ from ssbbot.models import Profile, Stuff
 import logging
 import os
 import re
-
+os.environ["DJANGO_ALLOW_ASYNC_UNSAFE"] = "true"
 from aiogram import Bot, Dispatcher, executor, types
 from dotenv import load_dotenv
 import aiogram.utils.markdown as fmt
@@ -41,7 +41,7 @@ async def sklad_1_answer(message: types.Message):
 
     user_data['adress'] = message.text
 
-    await message.answer("Ок!", reply_markup=types.ReplyKeyboardRemove())
+    await message.answer("Принято!", reply_markup=types.ReplyKeyboardRemove())
     
 
 
@@ -124,11 +124,8 @@ async def seasonal_choose_period(call: types.CallbackQuery):
 
     keyboard = types.InlineKeyboardMarkup(row_width=3, resize_keyboard=True)
     keyboard.add(*buttons)
-    await call.message.answer("Принято! Выберите период хранения.", reply_markup=keyboard)
-
+    await call.message.answer("Выберите период хранения.", reply_markup=keyboard)
     await bot.delete_message(call.from_user.id, call.message.message_id)
-    await call.message.answer('yyy', reply_markup=types.ReplyKeyboardRemove())
-
     await call.answer()
 
 
@@ -223,7 +220,7 @@ async def seasonal_book(call: types.CallbackQuery):
             fmt.text(f"\nСтоимость:   {total_price} рублей"), sep="\n"
         ), reply_markup=keyboard)
 
-    print(user_data)
+    #print(user_data)
     await call.answer()
 
 
@@ -299,7 +296,25 @@ async def choice_month(call: types.CallbackQuery):
 @ dp.callback_query_handler(text='ok')
 async def registration(call: types.CallbackQuery):
     await bot.delete_message(call.from_user.id, call.message.message_id)
-    await call.message.answer('хз', reply_markup=types.ReplyKeyboardRemove())
+    user = call.message["chat"]["first_name"]
+    user_id = call.message["chat"]["id"]
+    try:
+        Profile.objects.get(external_id=user_id)
+        buttons = [
+        types.InlineKeyboardButton(
+            text="Забронировать", callback_data='ok')
+        ]
+        keyboard = types.InlineKeyboardMarkup(resize_keyboard=True)
+        keyboard.add(*buttons)
+        await call.message.answer(f' {user}, вы уже у нас зарегистрированы, рады видеть вас снова! '
+                ' Для оплаты нажмите кнопку ниже:', reply_markup=keyboard)
+    except:
+        await call.message.answer(f' {user}, вы у нас впервые? Давайте зарегистрируемся. ')
+        profile = Profile.objects.get_or_create(external_id=user_id)
+        profile.username = call.message["chat"]["username"] or ''
+        profile.first_name = user or ''
+        profile.save()
+        
     await call.answer()
 
 
