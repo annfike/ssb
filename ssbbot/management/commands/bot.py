@@ -258,6 +258,10 @@ async def choice_month(call: types.CallbackQuery):
     else:
         price_one_month = ((int(*size) - 1) * 150) + 599
     total_price = price_one_month * int(*month)
+    period_days = int(*month)*31
+    user_data['period_days'] = period_days
+    user_data['total_price'] = total_price
+
     buttons = [
         types.InlineKeyboardButton(
             text="Забронировать", callback_data='Забронировать')
@@ -280,24 +284,28 @@ async def choice_month(call: types.CallbackQuery):
 async def registration(call: types.CallbackQuery):
     await bot.delete_message(call.from_user.id, call.message.message_id)
     user = call.message["chat"]["first_name"]
-    try:
-        Profile.objects.get(external_id=call.from_user.id)
-        buttons = [
+    buttons = [
         types.InlineKeyboardButton(
             text="Оплатить", callback_data='Оплатить')
         ]
-        keyboard = types.InlineKeyboardMarkup(resize_keyboard=True)
-        keyboard.add(*buttons)
+    keyboard = types.InlineKeyboardMarkup(resize_keyboard=True)
+    keyboard.add(*buttons)
+    try:
+        Profile.objects.get(external_id=call.from_user.id)
         await call.message.answer(f' {user}, вы уже у нас зарегистрированы, рады видеть вас снова! '
                 ' Для оплаты нажмите кнопку ниже:', reply_markup=keyboard)
         await call.answer()
     except:
         await call.message.answer(f' {user}, вы у нас впервые? Давайте зарегистрируемся. ')
-        profile = Profile.objects.get_or_create(external_id=call.from_user.id)
-        profile.username = call.message["chat"]["username"] or ''
-        profile.first_name = user or ''
+        profile = Profile.objects.create(
+            external_id=call.from_user.id,
+            username = call.message["chat"]["username"] or '',
+            first_name = user or '',
+            )
         profile.save()
         
+        await call.message.answer(f' {user}, вы зарегистрированы! '
+                ' Для оплаты нажмите кнопку ниже:', reply_markup=keyboard)
         await call.answer()
 
 
