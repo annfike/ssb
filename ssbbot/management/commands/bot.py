@@ -39,6 +39,10 @@ async def cmd_start(message: types.Message):
 @dp.message_handler(lambda message: message.text == "метро Спартак")
 @dp.message_handler(lambda message: message.text == "метро Сокол")
 async def sklad_1_answer(message: types.Message):
+
+    #print(message["chat"]) #{"id": 110968809, "first_name": "Anna", "username": "annfike", "type": "private"}
+    #print(message["chat"]["first_name"]) #Anna
+
     user_data['adress'] = message.text
 
     buttons = [
@@ -53,8 +57,48 @@ async def sklad_1_answer(message: types.Message):
 
 @dp.callback_query_handler(text='сезонные вещи')
 async def send_msg(call: types.CallbackQuery):
-    await call.message.answer('yyy', reply_markup=types.ReplyKeyboardRemove())
+    buttons = [
+        types.InlineKeyboardButton(text='Лыжи', callback_data='Лыжи'),
+        types.InlineKeyboardButton(text='Сноуборд', callback_data='Сноуборд'),
+        types.InlineKeyboardButton(text='Велосипед', callback_data='Велосипед'),
+        types.InlineKeyboardButton(text='Колеса', callback_data='Колеса'),
+               ]
+
+    keyboard = types.InlineKeyboardMarkup(row_width=4, resize_keyboard=True)
+    keyboard.add(*buttons)
+    await call.message.answer("Что будем хранить?", reply_markup=keyboard)
     await call.answer()
+
+
+@dp.callback_query_handler(text='Лыжи')
+@dp.callback_query_handler(text='Сноуборд')
+@dp.callback_query_handler(text='Велосипед')
+@dp.callback_query_handler(text='Колеса')
+async def seasonal_choose_quantity(call: types.CallbackQuery):
+    user_data['item'] = call.data
+    await call.message.answer(
+        fmt.text(
+            fmt.text(fmt.hunderline("Условия:\n\n")),
+            fmt.text('''1 лыжи - 100 р/неделя или 300 р/мес\n
+                    1 сноуборд - 100 р/неделя или 300 р/мес\n
+                    4 колеса - 200 р/мес\n
+                    1 велосипед - 150 р/ неделя или 400 р/мес\n
+                    Укажите количество вещей для хранения.''')
+        ),
+        reply_markup=types.ReplyKeyboardRemove()
+    )
+    buttons = [
+        types.InlineKeyboardButton(
+            text=f'{cell}', callback_data=f'{cell}') for cell in range(10)
+    ]
+
+    keyboard = types.InlineKeyboardMarkup(row_width=5, resize_keyboard=True)
+    keyboard.add(*buttons)
+    #await call.message.answer("Выберите размер ячейки:", reply_markup=keyboard)
+    await call.answer()
+
+
+
 
 
 @dp.callback_query_handler(text='другое')
