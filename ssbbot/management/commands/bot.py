@@ -277,7 +277,7 @@ async def choice_month(call: types.CallbackQuery):
     total_price = price_one_month * int(*month)
     buttons = [
         types.InlineKeyboardButton(
-            text="Забронироавать", callback_data='ok')
+            text="Забронировать", callback_data='ok')
     ]
     keyboard = types.InlineKeyboardMarkup(resize_keyboard=True)
     keyboard.add(*buttons)
@@ -302,7 +302,7 @@ async def registration(call: types.CallbackQuery):
         Profile.objects.get(external_id=user_id)
         buttons = [
         types.InlineKeyboardButton(
-            text="Забронировать", callback_data='ok')
+            text="Оплатить", callback_data='ok')
         ]
         keyboard = types.InlineKeyboardMarkup(resize_keyboard=True)
         keyboard.add(*buttons)
