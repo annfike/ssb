@@ -283,7 +283,7 @@ async def choice_month(call: types.CallbackQuery):
     total_price = price_one_month * int(*month)
     buttons = [
         types.InlineKeyboardButton(
-            text="Забронировать", callback_data='ok')
+            text="Забронировать", callback_data='Забронировать')
     ]
     keyboard = types.InlineKeyboardMarkup(resize_keyboard=True)
     keyboard.add(*buttons)
@@ -299,7 +299,7 @@ async def choice_month(call: types.CallbackQuery):
     await call.answer()
 
 
-@ dp.callback_query_handler(text='ok')
+@ dp.callback_query_handler(text='Забронировать')
 async def registration(call: types.CallbackQuery):
     await bot.delete_message(call.from_user.id, call.message.message_id)
     user = call.message["chat"]["first_name"]
@@ -316,7 +316,7 @@ async def registration(call: types.CallbackQuery):
         await call.answer()
     except:
         await call.message.answer(f' {user}, вы у нас впервые? Давайте зарегистрируемся. ')
-        profile = Profile.objects.get_or_create(external_id=user_id)
+        profile = Profile.objects.get_or_create(external_id=call.from_user.id)
         profile.username = call.message["chat"]["username"] or ''
         profile.first_name = user or ''
         profile.save()
