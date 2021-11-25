@@ -114,7 +114,7 @@ async def send_date(call: types.CallbackQuery):
 async def choice_month(call: types.CallbackQuery):
     user_data['rent'] = call.data
     month = re.findall(r'\d+', call.data)
-    if user_data['size_cell'] == "1":
+    if user_data["size_cell"] == "1":
         price_one_month = 599
     else:
         price_one_month = ((int(user_data['size_cell']) - 1) * 150) + 599
