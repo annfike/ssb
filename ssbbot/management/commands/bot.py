@@ -57,7 +57,7 @@ async def cmd_start(message: types.Message):
 @dp.message_handler(text_contains="метро")
 async def sklad_1_answer(message: types.Message):
     user_data['adress'] = message.text
-    await message.answer("Принято!", reply_markup=types.ReplyKeyboardRemove())
+
   
     keyboard = types.InlineKeyboardMarkup(row_width=2, resize_keyboard=True)
 
@@ -104,12 +104,13 @@ async def seasonal_choose_quantity(call: types.CallbackQuery):
     )
     buttons = [
         types.InlineKeyboardButton(
-            text=f'{cell} шт', callback_data=f'{cell} шт') for cell in range(1,11)
+            text=f'{cell} шт', callback_data=f'{cell} шт') for cell in range(1, 11)
     ]
     keyboard = types.InlineKeyboardMarkup(row_width=5, resize_keyboard=True)
     keyboard.add(*buttons)
     await call.message.answer("Укажите количество вещей для хранения.", reply_markup=keyboard)
     await call.answer()
+
 
 @ dp.callback_query_handler(text_contains='шт')
 async def seasonal_choose_period(call: types.CallbackQuery):
@@ -225,8 +226,6 @@ async def seasonal_book(call: types.CallbackQuery):
         ), reply_markup=keyboard)
 
     await call.answer()
-
-
 
 
 @dp.callback_query_handler(text='другое')
