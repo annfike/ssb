@@ -41,16 +41,9 @@ async def cmd_start(message: types.Message):
 
 @dp.message_handler(text_contains="метро")
 async def sklad_1_answer(message: types.Message):
-
-    #print(message["chat"]) #{"id": 110968809, "first_name": "Anna", "username": "annfike", "type": "private"}
-    #print(message["chat"]["first_name"]) #Anna
-
     user_data['adress'] = message.text
-
     await message.answer("Принято!", reply_markup=types.ReplyKeyboardRemove())
-    
-
-
+  
     keyboard = types.InlineKeyboardMarkup(row_width=2, resize_keyboard=True)
 
     buttons = [
@@ -103,17 +96,7 @@ async def seasonal_choose_quantity(call: types.CallbackQuery):
     await call.message.answer("Укажите количество вещей для хранения.", reply_markup=keyboard)
     await call.answer()
 
-
-@ dp.callback_query_handler(text='1 шт')
-@ dp.callback_query_handler(text='2 шт')
-@ dp.callback_query_handler(text='3 шт')
-@ dp.callback_query_handler(text='4 шт')
-@ dp.callback_query_handler(text='5 шт')
-@ dp.callback_query_handler(text='6 шт')
-@ dp.callback_query_handler(text='7 шт')
-@ dp.callback_query_handler(text='8 шт')
-@ dp.callback_query_handler(text='9 шт')
-@ dp.callback_query_handler(text='10 шт')
+@ dp.callback_query_handler(text_contains='шт')
 async def seasonal_choose_period(call: types.CallbackQuery):
     user_data['quantity'] = call.data
     buttons = [
@@ -213,7 +196,7 @@ async def seasonal_book(call: types.CallbackQuery):
 
     buttons = [
         types.InlineKeyboardButton(
-            text="Забронировать", callback_data='ok')
+            text="Забронировать", callback_data='Забронировать')
     ]
     keyboard = types.InlineKeyboardMarkup(resize_keyboard=True)
     keyboard.add(*buttons)
@@ -226,13 +209,7 @@ async def seasonal_book(call: types.CallbackQuery):
             fmt.text(f"\nСтоимость:   {total_price} рублей"), sep="\n"
         ), reply_markup=keyboard)
 
-    #print(user_data)
     await call.answer()
-
-
-
-
-
 
 
 
@@ -358,9 +335,6 @@ async def send_qrcode(call: types.CallbackQuery):
     await bot.send_photo(chat_id=call.message.chat.id, photo=photo)
     await call.answer()
 
-
-#if __name__ == '__main__':
-#    executor.start_polling(dp, skip_updates=True)
 
 class Command(BaseCommand):
     executor.start_polling(dp, skip_updates=True)
