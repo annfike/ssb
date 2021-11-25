@@ -349,7 +349,7 @@ async def first_name(message: types.Message, state: FSMContext):
     await message.answer('Укажите passport')
 
 
-@dp.message_handler(state=FsmAdmin.pasport, regexp='[\d+]')
+@dp.message_handler(state=FsmAdmin.passport, regexp='[\d+]')
 async def first_name(message: types.Message, state: FSMContext):
     async with state.proxy() as data:
         data["passport"] = message.text
@@ -424,9 +424,9 @@ async def send_qrcode(call: types.CallbackQuery):
     await bot.send_photo(chat_id=call.message.chat.id, photo=photo)
     await call.answer()
 
-# if __name__ == '__main__':
-#    executor.start_polling(dp, skip_updates=True)
+if __name__ == '__main__':
+   executor.start_polling(dp, skip_updates=True)
 
 
-class Command(BaseCommand):
-    executor.start_polling(dp, skip_updates=True)
+# class Command(BaseCommand):
+#     executor.start_polling(dp, skip_updates=True)
