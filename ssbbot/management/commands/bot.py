@@ -405,57 +405,53 @@ async def begin(message: types.Message):
 async def first_name(message: types.Message, state: FSMContext):
     async with state.proxy() as data:
         data["first_name"] = message.text
-    await FsmAdmin.next()
-
     await bot.send_message(message.from_user.id, 'Укажите фамилию')
+    await FsmAdmin.next()
 
 
 @dp.message_handler(state=FsmAdmin.last_name, regexp='[А-Яа-я]')
-async def first_name(message: types.Message, state: FSMContext):
+async def last_name(message: types.Message, state: FSMContext):
     async with state.proxy() as data:
         data["last_name"] = message.text
+    await bot.send_message(message.from_user.id, 'Укажите паспортные данные')
     await FsmAdmin.next()
-    await bot.send_message(message.from_user.id, 'Укажите email')
 
 
-@dp.message_handler(state=FsmAdmin.email, regexp='[\w\.-]+@[\w\.-]+(\.[\w]+)+')
-async def first_name(message: types.Message, state: FSMContext):
+#@dp.message_handler(state=FsmAdmin.email, regexp='[\w\.-]+@[\w\.-]+(\.[\w]+)+')
+@dp.message_handler(state=FsmAdmin.email, regexp='[А-Яа-я]')
+async def passport(message: types.Message, state: FSMContext):
     async with state.proxy() as data:
-        data["email"] = message.text
+        data["passport"] = message.text
+    await message.answer('Укажите дату рождения')
     await FsmAdmin.next()
-    await message.answer('Укажите passport')
 
 
 @dp.message_handler(state=FsmAdmin.passport, regexp='[\d+]')
 async def first_name(message: types.Message, state: FSMContext):
     async with state.proxy() as data:
-        data["passport"] = message.text
-    await FsmAdmin.next()
+        data["birthday"] = message.text
+    #await FsmAdmin.next()
     await bot.delete_message(message.from_user.id, message.message_id)
-    await bot.send_message(message.from_user.id, '...!!')
+    buttons = [
+    types.InlineKeyboardButton(
+        text="Оплатить", callback_data='Оплатить')
+    ]
+    keyboard = types.InlineKeyboardMarkup(resize_keyboard=True)
+    keyboard.add(*buttons)
+    profile = Profile.objects.create(
+        external_id=message.from_user.id,
+        username = message["chat"]["username"] or '',
+        first_name = data["first_name"],
+        last_name = data["last_name"],
+        #contact = data["contact"],
+        passport = data["passport"],
+        birthday = data["birthday"],
+        )
+    profile.save()
+    await message.answer(f' {data["first_name"]}, вы зарегистрированы! '
+            ' Для оплаты нажмите кнопку ниже:', reply_markup=keyboard)
+    await FsmAdmin.next()
 
-
-
-
-        # buttons = [
-        # types.InlineKeyboardButton(
-        #     text="Оплатить", callback_data='Оплатить')
-        # ]
-        # keyboard = types.InlineKeyboardMarkup(resize_keyboard=True)
-        # keyboard.add(*buttons)
-        # profile = Profile.objects.create(
-        #     external_id=call.from_user.id,
-        #     username = call.message["chat"]["username"] or '',
-        #     first_name = data["first_name"],
-        #     last_name = data["last_name"],
-        #     contact = data["contact"],
-        #     passport = data["passport"],
-        #     birthday = data["birthday"],
-        #     )
-        # profile.save()
-        # await call.message.answer(f' {user}, вы зарегистрированы! '
-        #         ' Для оплаты нажмите кнопку ниже:', reply_markup=keyboard)
-        # await call.answer()
 
 
 @ dp.callback_query_handler(text='Оплатить')
@@ -491,10 +487,8 @@ async def send_qrcode(call: types.CallbackQuery):
             f'Вы сможете попасть на склад в любое время в период с {storage_date_start} по {storage_date_end}')
     photo = open(filepath, 'rb')
     await bot.send_photo(chat_id=call.message.chat.id, photo=photo)
-    await call.answer()
-
-
-
+    await call.message.answer('Спасибо за заказ! Если хотите сделать еще один - нажмите /start')
+    
 
  
 
