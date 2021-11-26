@@ -14,14 +14,14 @@ from pathlib import Path
 import os
 from pathlib import Path
 
-import dj_database_url
+#import dj_database_url
 from environs import Env
 
 env = Env()
 env.read_env()
 
 secret_key = env.str('SECRET_KEY')
-allowed_hosts = env.list('ALLOWED_HOSTS')
+#allowed_hosts = env.list('ALLOWED_HOSTS')
 db_url = env.str('DATABASE_URL')
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
