@@ -327,28 +327,78 @@ async def choice_month(call: types.CallbackQuery):
             fmt.text(f"\nСтоимость итого:   {total_price} рублей"), sep="\n",
         ), reply_markup=keyboard,
     )
-    await bot.delete_message(call.from_user.id, call.message.message_id)
-    await bot.send_message(call.from_user.id, "Для продолжения пройдите регистрацию")
+    #await bot.delete_message(call.from_user.id, call.message.message_id)
     await call.answer()
+
+
+@ dp.callback_query_handler(text='Забронировать')
+async def registration(call: types.CallbackQuery):
+    await bot.delete_message(call.from_user.id, call.message.message_id)
+    user = call.message["chat"]["first_name"]
+    
+    try:
+        Profile.objects.get(external_id=call.from_user.id)
+        buttons = [
+        types.InlineKeyboardButton(
+            text="Оплатить", callback_data='Оплатить')
+        ]
+        keyboard = types.InlineKeyboardMarkup(resize_keyboard=True)
+        keyboard.add(*buttons)
+        await call.message.answer(f' {user}, вы уже у нас зарегистрированы, рады видеть вас снова! '
+                ' Для оплаты нажмите кнопку ниже:', reply_markup=keyboard)
+        await call.answer()
+    except:
+        keyboard = types.ReplyKeyboardMarkup(row_width=2, resize_keyboard=True, one_time_keyboard=True)
+        buttons = [
+            "Регистрация",
+            "Отмена",
+        ]
+        keyboard.add(*buttons)
+        await call.message.answer(f' {user}, вы у нас впервые? Давайте зарегистрируемся.', reply_markup=keyboard)
+
+
+@dp.message_handler(lambda message: message.text == "Отмена")
+async def cancel(message: types.Message):
+    await message.answer('Мне жаль, что вы уходите, но если передумаете - нажмите /start')
 
 
 @dp.message_handler(text="Регистрация")
 async def registration(message: types.Message):
-    keyboard_ok = types.ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=True)
-    key = types.KeyboardButton(text='Согласен')
-    keyboard_ok.add(key)
+    user_id = message.from_user.id
+    doc = open('pd.pdf', 'rb')
+    await bot.send_document(user_id, doc)
+    keyboard = types.ReplyKeyboardMarkup(row_width=2, resize_keyboard=True, one_time_keyboard=True)
+    buttons = [
+            "Принять",
+            "Отказаться",
+    ]
+    keyboard.add(*buttons)
     await bot.send_message(
-        message.from_user.id,
-        "Ознакомьтесь с согласием на обработку персональных данных. ФАЙЛ",
-        reply_markup=keyboard_ok,
-    )
-
+        user_id,
+        "Для заказа нужно ваше согласие на обработку персональных данных.",
+        reply_markup=keyboard,
+        )
 
 @dp.message_handler(state=None)
 async def begin(message: types.Message):
-    if message.text == 'Согласен':
+    if message.text == 'Принять':
         await FsmAdmin.first_name.set()
         await bot.send_message(message.from_user.id, 'Укажите имя')
+    if message.text == 'Отказаться':
+        user_id = message.from_user.id
+        doc = open('pd.pdf', 'rb')
+        await bot.send_document(user_id, doc)
+        keyboard = types.ReplyKeyboardMarkup(row_width=2, resize_keyboard=True, one_time_keyboard=True)
+        buttons = [
+            "Принять",
+            "Отказаться",
+        ]
+        keyboard.add(*buttons)
+        await bot.send_message(
+        user_id,
+        "Извините, без согласия на обработку данных заказы невозможны.",
+        reply_markup=keyboard,
+        )
 
 
 @dp.message_handler(state=FsmAdmin.first_name, regexp='[А-Яа-я]')
@@ -387,33 +437,25 @@ async def first_name(message: types.Message, state: FSMContext):
 
 
 
-@ dp.callback_query_handler(text='Забронировать')
-async def registration(call: types.CallbackQuery):
-    await bot.delete_message(call.from_user.id, call.message.message_id)
-    user = call.message["chat"]["first_name"]
-    buttons = [
-        types.InlineKeyboardButton(
-            text="Оплатить", callback_data='Оплатить')
-        ]
-    keyboard = types.InlineKeyboardMarkup(resize_keyboard=True)
-    keyboard.add(*buttons)
-    try:
-        Profile.objects.get(external_id=call.from_user.id)
-        await call.message.answer(f' {user}, вы уже у нас зарегистрированы, рады видеть вас снова! '
-                ' Для оплаты нажмите кнопку ниже:', reply_markup=keyboard)
-        await call.answer()
-    except:
-        await call.message.answer(f' {user}, вы у нас впервые? Давайте зарегистрируемся. ')
-        profile = Profile.objects.create(
-            external_id=call.from_user.id,
-            username = call.message["chat"]["username"] or '',
-            first_name = user or '',
-            )
-        profile.save()
-        
-        await call.message.answer(f' {user}, вы зарегистрированы! '
-                ' Для оплаты нажмите кнопку ниже:', reply_markup=keyboard)
-        await call.answer()
+        # buttons = [
+        # types.InlineKeyboardButton(
+        #     text="Оплатить", callback_data='Оплатить')
+        # ]
+        # keyboard = types.InlineKeyboardMarkup(resize_keyboard=True)
+        # keyboard.add(*buttons)
+        # profile = Profile.objects.create(
+        #     external_id=call.from_user.id,
+        #     username = call.message["chat"]["username"] or '',
+        #     first_name = data["first_name"],
+        #     last_name = data["last_name"],
+        #     contact = data["contact"],
+        #     passport = data["passport"],
+        #     birthday = data["birthday"],
+        #     )
+        # profile.save()
+        # await call.message.answer(f' {user}, вы зарегистрированы! '
+        #         ' Для оплаты нажмите кнопку ниже:', reply_markup=keyboard)
+        # await call.answer()
 
 
 @ dp.callback_query_handler(text='Оплатить')
@@ -451,9 +493,14 @@ async def send_qrcode(call: types.CallbackQuery):
     await bot.send_photo(chat_id=call.message.chat.id, photo=photo)
     await call.answer()
 
-if __name__ == '__main__':
-   executor.start_polling(dp, skip_updates=True)
 
 
-# class Command(BaseCommand):
-#     executor.start_polling(dp, skip_updates=True)
+
+ 
+
+#if __name__ == '__main__':
+#   executor.start_polling(dp, skip_updates=True)
+
+
+class Command(BaseCommand):
+     executor.start_polling(dp, skip_updates=True)
