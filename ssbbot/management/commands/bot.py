@@ -15,11 +15,11 @@ from aiogram.dispatcher.filters.state import State, StatesGroup
 from aiogram.contrib.fsm_storage.memory import MemoryStorage
 from dotenv import load_dotenv
 
-from django.core.management.base import BaseCommand
+# from django.core.management.base import BaseCommand
 from datetime import date, timedelta
 
 
-from ssbbot.models import Profile, Stuff
+# from ssbbot.models import Profile, Stuff
 
 
 from pytimeparse import parse
@@ -27,7 +27,7 @@ import pyqrcode
 from geopy.distance import geodesic as GD
 
 
-os.environ["DJANGO_ALLOW_ASYNC_UNSAFE"] = "true"
+# os.environ["DJANGO_ALLOW_ASYNC_UNSAFE"] = "true"
 
 loop = asyncio.get_event_loop()
 PAYMENTS_PROVIDER_TOKEN = '381764678:TEST:31252'
@@ -388,6 +388,7 @@ async def registration(message: types.Message):
         reply_markup=keyboard,
         )
 
+
 @dp.message_handler(text='Оплатить')
 async def pay(message: types.Message):
     # if message.text:
@@ -428,7 +429,7 @@ async def begin(message: types.Message):
         await FsmAdmin.first_name.set()
         await bot.send_message(message.from_user.id, 'Укажите имя')
     else:
-        await bot.send_message(message.from_user.id, 'Не согласен')
+        await bot.send_message(message.from_user.id, 'Отказаться')
     if message.text == 'Отказаться':
         user_id = message.from_user.id
         doc = open('pd.pdf', 'rb')
@@ -448,8 +449,10 @@ async def begin(message: types.Message):
 
 @dp.message_handler(state=FsmAdmin.first_name)
 async def first_name(message: types.Message, state: FSMContext):
-
     name = re.findall(r"\b[А-Яа-я]{1,15}\b", message.text, flags=re.I)
+
+    # if len([i for i in str(name) if i.isalpha()]) > 15:
+    #     await bot.send_message(message.from_user.id, 'Превышено количество символов (не более 15)')
     if not name:
         await bot.send_message(message.from_user.id, 'Используйте кирилицу, либо превышено количество символов (не более 15)')
     else:
@@ -460,7 +463,7 @@ async def first_name(message: types.Message, state: FSMContext):
 
 
 @dp.message_handler(state=FsmAdmin.last_name)
-async def last_name(message: types.Message, state: FSMContext):
+async def first_name(message: types.Message, state: FSMContext):
     name = re.findall(r"\b[А-Яа-я]{1,15}\b", message.text, flags=re.I)
     if not name:
         await bot.send_message(message.from_user.id,
@@ -468,27 +471,17 @@ async def last_name(message: types.Message, state: FSMContext):
     else:
         async with state.proxy() as data:
             data["last_name"] = message.text
+
         keyboard_ok = types.ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=True)
         key_1 = types.KeyboardButton(text='контакт', request_contact=True)
         keyboard_ok.add(key_1)
         await FsmAdmin.next()
         await bot.send_message(message.from_user.id, 'Укажите номер телефона')
-    async with state.proxy() as data:
-        data["first_name"] = message.text
-    await bot.send_message(message.from_user.id, 'Укажите фамилию')
-    await FsmAdmin.next()
-
         # await bot.send_message(message.from_user.id, 'Укажите номер телефона', reply_markup=keyboard_ok)
 
-@dp.message_handler(state=FsmAdmin.last_name, regexp='[А-Яа-я]')
-async def last_name(message: types.Message, state: FSMContext):
-    async with state.proxy() as data:
-        data["last_name"] = message.text
-    await bot.send_message(message.from_user.id, 'Укажите паспортные данные')
-    await FsmAdmin.next()
 
 @dp.message_handler(state=FsmAdmin.phone)
-async def phone(message: types.Message, state: FSMContext):
+async def first_name(message: types.Message, state: FSMContext):
     phone = re.findall(r"[\d+]{10}", message.text, flags=re.I)
     if not phone:
         await message.answer('Используйте только цифры')
@@ -499,17 +492,8 @@ async def phone(message: types.Message, state: FSMContext):
         await message.answer('Укажите номер паспорта в формате: ХХХХ ХХХХХХ')
 
 
-#@dp.message_handler(state=FsmAdmin.email, regexp='[\w\.-]+@[\w\.-]+(\.[\w]+)+')
-@dp.message_handler(state=FsmAdmin.email, regexp='[А-Яа-я]')
-async def passport(message: types.Message, state: FSMContext):
-    async with state.proxy() as data:
-        data["passport"] = message.text
-    await message.answer('Укажите дату рождения')
-    await FsmAdmin.next()
-
-
-@dp.message_handler(state=FsmAdmin.passport)
-async def passport(message: types.Message, state: FSMContext):
+@dp.message_handler(state=FsmAdmin.pasport)
+async def first_name(message: types.Message, state: FSMContext):
     passp = re.findall(r"[\d+]{4}\s[\d+]{6}", message.text, flags=re.I)
     if not passp:
         await message.answer('Укажите номер паспорта в формате: ХХХХ ХХХХХХ')
@@ -521,7 +505,7 @@ async def passport(message: types.Message, state: FSMContext):
 
 
 @dp.message_handler(state=FsmAdmin.born)
-async def born(message: types.Message, state: FSMContext):
+async def first_name(message: types.Message, state: FSMContext):
     await bot.send_message(message.from_user.id, message.text)
     born = re.findall(r"[\d+]{2}.[\d+]{2}.[\d+]{4}", message.text, flags=re.I)
     if not born:
@@ -534,6 +518,8 @@ async def born(message: types.Message, state: FSMContext):
         keyboard_ok.add(key_8)
         await bot.send_message(message.from_user.id, 'Готово!', reply_markup=keyboard_ok)
         await state.finish()
+        # await bot.send_message(message.from_user.id, str(state), message.text, reply_markup=keyboard_ok)
+
 
 
 @ dp.callback_query_handler(text='Забронировать')
@@ -541,37 +527,37 @@ async def registration(call: types.CallbackQuery):
     await bot.delete_message(call.from_user.id, call.message.message_id)
     user = call.message["chat"]["first_name"]
 
-@dp.message_handler(state=FsmAdmin.passport, regexp='[\d+]')
-async def first_name(message: types.Message, state: FSMContext):
-    async with state.proxy() as data:
-        data["birthday"] = message.text
-    #await FsmAdmin.next()
-    await bot.delete_message(message.from_user.id, message.message_id)
-
-    buttons = [
-    types.InlineKeyboardButton(
-        text="Оплатить", callback_data='Оплатить')
-    ]
-    keyboard = types.InlineKeyboardMarkup(resize_keyboard=True)
-    keyboard.add(*buttons)
-
-    try:
-        Profile.objects.get(external_id=call.from_user.id)
-        await call.message.answer(f' {user}, вы уже у нас зарегистрированы, рады видеть вас снова! '
-                ' Для оплаты нажмите кнопку ниже:', reply_markup=keyboard)
-        await call.answer()
-    except:
-        await call.message.answer(f' {user}, вы у нас впервые? Давайте зарегистрируемся. ')
-        profile = Profile.objects.create(
-            external_id=call.from_user.id,
-            username=call.message["chat"]["username"] or '',
-            first_name=user or '',
-            )
-        profile.save()
-
-        await call.message.answer(f' {user}, вы зарегистрированы! '
-                ' Для оплаты нажмите кнопку ниже:', reply_markup=keyboard)
-        await call.answer()
+# @dp.message_handler(state=FsmAdmin.passport, regexp='[\d+]')
+# async def first_name(message: types.Message, state: FSMContext):
+#     async with state.proxy() as data:
+#         data["birthday"] = message.text
+#     #await FsmAdmin.next()
+#     await bot.delete_message(message.from_user.id, message.message_id)
+#
+#     buttons = [
+#     types.InlineKeyboardButton(
+#         text="Оплатить", callback_data='Оплатить')
+#     ]
+#     keyboard = types.InlineKeyboardMarkup(resize_keyboard=True)
+#     keyboard.add(*buttons)
+#
+#     try:
+#         Profile.objects.get(external_id=call.from_user.id)
+#         await call.message.answer(f' {user}, вы уже у нас зарегистрированы, рады видеть вас снова! '
+#                 ' Для оплаты нажмите кнопку ниже:', reply_markup=keyboard)
+#         await call.answer()
+#     except:
+#         await call.message.answer(f' {user}, вы у нас впервые? Давайте зарегистрируемся. ')
+#         profile = Profile.objects.create(
+#             external_id=call.from_user.id,
+#             username=call.message["chat"]["username"] or '',
+#             first_name=user or '',
+#             )
+#         profile.save()
+#
+#         await call.message.answer(f' {user}, вы зарегистрированы! '
+#                 ' Для оплаты нажмите кнопку ниже:', reply_markup=keyboard)
+#         await call.answer()
 
     # profile = Profile.objects.create(
     #     external_id=message.from_user.id,
@@ -583,9 +569,9 @@ async def first_name(message: types.Message, state: FSMContext):
     #     birthday = data["birthday"],
     #     )
     # profile.save()
-    await message.answer(f' {data["first_name"]}, вы зарегистрированы! '
-            ' Для оплаты нажмите кнопку ниже:', reply_markup=keyboard)
-    await FsmAdmin.next()
+    # await message.answer(f' {data["first_name"]}, вы зарегистрированы! '
+    #         ' Для оплаты нажмите кнопку ниже:', reply_markup=keyboard)
+    # await FsmAdmin.next()
 
 
 
@@ -626,10 +612,10 @@ async def send_qrcode(call: types.CallbackQuery):
     await call.message.answer('Спасибо за заказ! Если хотите сделать еще один - нажмите /start')
     
 
-# if __name__ == '__main__':
-#    executor.start_polling(dp, skip_updates=True)
+if __name__ == '__main__':
+   executor.start_polling(dp, skip_updates=True)
 
 
-class Command(BaseCommand):
-    executor.start_polling(dp, skip_updates=True)
+# class Command(BaseCommand):
+#     executor.start_polling(dp, skip_updates=True)
 
