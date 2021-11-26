@@ -1,2 +1,2 @@
 web: gunicorn ssb.wsgi --log-file -
-worker: python ssb/manage.py bot
+worker: python manage.py bot
