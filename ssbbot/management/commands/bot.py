@@ -6,12 +6,14 @@ import os
 import re
 
 from aiogram import Bot, Dispatcher, executor, types
+from aiogram.types import KeyboardButton
 from dotenv import load_dotenv
 import aiogram.utils.markdown as fmt
 import time
 from datetime import date, timedelta
 from pytimeparse import parse
 import pyqrcode
+from geopy.distance import geodesic as GD
 
 os.environ["DJANGO_ALLOW_ASYNC_UNSAFE"] = "true"
 
@@ -25,18 +27,42 @@ dp = Dispatcher(bot)
 
 @dp.message_handler(commands='start')
 async def cmd_start(message: types.Message):
+    keyboard = types.ReplyKeyboardMarkup(resize_keyboard=True).add(
+        KeyboardButton('Отправить свою локацию 🗺️', request_location=True)
+    )
+    await message.answer("Привет! Я помогу вам арендовать личную ячейку для хранения вещей.\n"
+     "Пришлите мне, пожалуйста, свою геолокацию, чтобы вы выбрали ближайший склад!", reply_markup=keyboard)
+
+@dp.message_handler(content_types=['location'])
+async def handle_location(message: types.Location):
+    user_data['lat'] = message.location.latitude
+    user_data['lon'] = message.location.longitude
+    user_location = (user_data['lat'], user_data['lon'])
+    location_anino = (55.581818, 37.594978)
+    location_chinatown = (55.75634, 37.63002)
+    location_vdnh = (55.82177, 37.64107)
+    location_mitino = (55.84589, 37.35909)
+    location_spartak = (55.8176765, 37.4345436)
+    location_sokol = (55.80518, 37.51495)
+    distance_anino = round(GD(user_location, location_anino).km)
+    distance_chinatown = round(GD(user_location, location_chinatown).km)
+    distance_vdnh = round(GD(user_location, location_vdnh).km)
+    distance_mitino = round(GD(user_location, location_mitino).km)
+    distance_spartak = round(GD(user_location, location_spartak).km)
+    distance_sokol = round(GD(user_location, location_sokol).km)
+
     keyboard = types.ReplyKeyboardMarkup(row_width=2, resize_keyboard=True)
     buttons = [
-        "метро Анино",
-        "метро Китай-Город",
-        "метро ВДНХ",
-        "метро Митино",
-        "метро Спартак",
-        "метро Сокол",
+        f"метро Анино \n({distance_anino} км от вас)",
+        f"метро Китай-Город \n({distance_chinatown} км от вас)",
+        f"метро ВДНХ \n({distance_vdnh} км от вас)",
+        f"метро Митино \n({distance_mitino} км от вас)",
+        f"метро Спартак \n({distance_spartak} км от вас)",
+        f"метро Сокол \n({distance_sokol} км от вас)",
     ]
     keyboard.add(*buttons)
     await bot.delete_message(message.from_user.id, message.message_id)
-    await message.answer('Выберите адрес склада:', reply_markup=keyboard)
+    await message.answer('Какой адрес вам подходит?', reply_markup=keyboard)
 
 
 @dp.message_handler(text_contains="метро")
