@@ -464,23 +464,23 @@ async def send_qrcode(call: types.CallbackQuery):
     code = f'{timestr}_{call.message.chat.id}_'
     url=pyqrcode.create(code)
     url.png(filepath,scale=15)
-    profile=Profile.objects.get(external_id=call.from_user.id)
+    #profile=Profile.objects.get(external_id=call.from_user.id)
     today = date.today()
     storage_date_end = today + timedelta(days=user_data['period_days'])
     storage_date_end = storage_date_end.strftime("%d.%m.%Y")
     storage_date_start = today.strftime("%d.%m.%Y")
     quantity = user_data['quantity']
     quantity = re.findall(r'\d+', quantity)[0]
-    stuff = Stuff.objects.create(
-    profile=profile,
-    storage=user_data['adress'],
-    description=user_data['item'],
-    quantity=quantity,
-    period=f'{storage_date_start}-{storage_date_end}',
-    price=user_data['total_price'],
-    code=filename,
-    )
-    stuff.save()
+    # stuff = Stuff.objects.create(
+    # profile=profile,
+    # storage=user_data['adress'],
+    # description=user_data['item'],
+    # quantity=quantity,
+    # period=f'{storage_date_start}-{storage_date_end}',
+    # price=user_data['total_price'],
+    # code=filename,
+    # )
+    # stuff.save()
 
     await call.message.answer('Заказ создан и успешно оплачен!'
             ' Вот ваш электронный ключ для доступа к вашему личному складу. '
