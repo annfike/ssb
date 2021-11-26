@@ -438,16 +438,16 @@ async def first_name(message: types.Message, state: FSMContext):
     ]
     keyboard = types.InlineKeyboardMarkup(resize_keyboard=True)
     keyboard.add(*buttons)
-    profile = Profile.objects.create(
-        external_id=message.from_user.id,
-        username = message["chat"]["username"] or '',
-        first_name = data["first_name"],
-        last_name = data["last_name"],
-        #contact = data["contact"],
-        passport = data["passport"],
-        birthday = data["birthday"],
-        )
-    profile.save()
+    # profile = Profile.objects.create(
+    #     external_id=message.from_user.id,
+    #     username = message["chat"]["username"] or '',
+    #     first_name = data["first_name"],
+    #     last_name = data["last_name"],
+    #     #contact = data["contact"],
+    #     passport = data["passport"],
+    #     birthday = data["birthday"],
+    #     )
+    # profile.save()
     await message.answer(f' {data["first_name"]}, вы зарегистрированы! '
             ' Для оплаты нажмите кнопку ниже:', reply_markup=keyboard)
     await FsmAdmin.next()
