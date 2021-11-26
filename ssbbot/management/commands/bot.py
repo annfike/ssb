@@ -1,10 +1,11 @@
-from ssbbot.models import Profile, Stuff
-
 import logging
 import os
 import re
 
+import pyqrcode
+import time
 import aiogram.utils.markdown as fmt
+
 from aiogram import Bot, Dispatcher, executor, types
 from aiogram.dispatcher import FSMContext
 from aiogram.dispatcher.filters.state import State, StatesGroup
@@ -12,12 +13,10 @@ from aiogram.contrib.fsm_storage.memory import MemoryStorage
 from dotenv import load_dotenv
 
 from django.core.management.base import BaseCommand
-
-import aiogram.utils.markdown as fmt
-import time
 from datetime import date, timedelta
-from pytimeparse import parse
-import pyqrcode
+
+from ssbbot.models import Profile, Stuff
+
 
 os.environ["DJANGO_ALLOW_ASYNC_UNSAFE"] = "true"
 
@@ -40,6 +39,7 @@ class FsmAdmin(StatesGroup):
 
 @dp.message_handler(commands='start')
 async def cmd_start(message: types.Message):
+
     keyboard = types.ReplyKeyboardMarkup(row_width=2, resize_keyboard=True, one_time_keyboard=True)
     buttons = [
         "метро Анино",
@@ -57,10 +57,7 @@ async def cmd_start(message: types.Message):
 @dp.message_handler(text_contains="метро")
 async def sklad_1_answer(message: types.Message):
     user_data['adress'] = message.text
-
-  
     keyboard = types.InlineKeyboardMarkup(row_width=2, resize_keyboard=True)
-
     buttons = [
         types.InlineKeyboardButton(text='сезонные вещи', callback_data='сезонные вещи'),
         types.InlineKeyboardButton(text='другое', callback_data='другое')
@@ -72,7 +69,6 @@ async def sklad_1_answer(message: types.Message):
 
 @dp.callback_query_handler(text='сезонные вещи')
 async def send_msg(call: types.CallbackQuery):
-
     buttons = [
         types.InlineKeyboardButton(text='Лыжи', callback_data='Лыжи'),
         types.InlineKeyboardButton(text='Сноуборд', callback_data='Сноуборд'),
@@ -357,8 +353,6 @@ async def first_name(message: types.Message, state: FSMContext):
     await bot.send_message(message.from_user.id, '...!!')
 
 
-
-
 @ dp.callback_query_handler(text='Забронировать')
 async def registration(call: types.CallbackQuery):
     await bot.delete_message(call.from_user.id, call.message.message_id)
@@ -378,8 +372,8 @@ async def registration(call: types.CallbackQuery):
         await call.message.answer(f' {user}, вы у нас впервые? Давайте зарегистрируемся. ')
         profile = Profile.objects.create(
             external_id=call.from_user.id,
-            username = call.message["chat"]["username"] or '',
-            first_name = user or '',
+            username=call.message["chat"]["username"] or '',
+            first_name=user or '',
             )
         profile.save()
         
@@ -423,9 +417,9 @@ async def send_qrcode(call: types.CallbackQuery):
     await bot.send_photo(chat_id=call.message.chat.id, photo=photo)
     await call.answer()
 
-if __name__ == '__main__':
-   executor.start_polling(dp, skip_updates=True)
+# if __name__ == '__main__':
+#    executor.start_polling(dp, skip_updates=True)
 
 
-# class Command(BaseCommand):
-#     executor.start_polling(dp, skip_updates=True)
+class Command(BaseCommand):
+    executor.start_polling(dp, skip_updates=True)
