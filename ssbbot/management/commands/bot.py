@@ -1,13 +1,19 @@
-from django.core.management.base import BaseCommand
 from ssbbot.models import Profile, Stuff
 
 import logging
 import os
 import re
 
+import aiogram.utils.markdown as fmt
 from aiogram import Bot, Dispatcher, executor, types
 from aiogram.types import KeyboardButton
+from aiogram.dispatcher import FSMContext
+from aiogram.dispatcher.filters.state import State, StatesGroup
+from aiogram.contrib.fsm_storage.memory import MemoryStorage
 from dotenv import load_dotenv
+
+from django.core.management.base import BaseCommand
+
 import aiogram.utils.markdown as fmt
 import time
 from datetime import date, timedelta
@@ -17,12 +23,21 @@ from geopy.distance import geodesic as GD
 
 os.environ["DJANGO_ALLOW_ASYNC_UNSAFE"] = "true"
 
+
 logging.basicConfig(level=logging.INFO)
 load_dotenv()
 token = os.getenv("BOT_KEY")
 user_data = {}
 bot = Bot(token=token, parse_mode=types.ParseMode.HTML)
-dp = Dispatcher(bot)
+storage = MemoryStorage()
+dp = Dispatcher(bot, storage=storage)
+
+
+class FsmAdmin(StatesGroup):
+    first_name = State()
+    last_name = State()
+    email = State()
+    passport = State()
 
 
 @dp.message_handler(commands='start')
@@ -51,7 +66,9 @@ async def handle_location(message: types.Location):
     distance_spartak = round(GD(user_location, location_spartak).km)
     distance_sokol = round(GD(user_location, location_sokol).km)
 
-    keyboard = types.ReplyKeyboardMarkup(row_width=2, resize_keyboard=True)
+
+    keyboard = types.ReplyKeyboardMarkup(row_width=2, resize_keyboard=True, one_time_keyboard=True)
+
     buttons = [
         f"метро Анино \n({distance_anino} км от вас)",
         f"метро Китай-Город \n({distance_chinatown} км от вас)",
@@ -68,14 +85,14 @@ async def handle_location(message: types.Location):
 @dp.message_handler(text_contains="метро")
 async def sklad_1_answer(message: types.Message):
     user_data['adress'] = message.text
-    await message.answer("Принято!", reply_markup=types.ReplyKeyboardRemove())
+
   
     keyboard = types.InlineKeyboardMarkup(row_width=2, resize_keyboard=True)
 
     buttons = [
         types.InlineKeyboardButton(text='сезонные вещи', callback_data='сезонные вещи'),
         types.InlineKeyboardButton(text='другое', callback_data='другое')
-               ]
+    ]
     keyboard.add(*buttons)
     await bot.delete_message(message.from_user.id, message.message_id)
     await message.answer("Что хотите хранить?:", reply_markup=keyboard)
@@ -115,12 +132,13 @@ async def seasonal_choose_quantity(call: types.CallbackQuery):
     )
     buttons = [
         types.InlineKeyboardButton(
-            text=f'{cell} шт', callback_data=f'{cell} шт') for cell in range(1,11)
+            text=f'{cell} шт', callback_data=f'{cell} шт') for cell in range(1, 11)
     ]
     keyboard = types.InlineKeyboardMarkup(row_width=5, resize_keyboard=True)
     keyboard.add(*buttons)
     await call.message.answer("Укажите количество вещей для хранения.", reply_markup=keyboard)
     await call.answer()
+
 
 @ dp.callback_query_handler(text_contains='шт')
 async def seasonal_choose_period(call: types.CallbackQuery):
@@ -238,8 +256,6 @@ async def seasonal_book(call: types.CallbackQuery):
     await call.answer()
 
 
-
-
 @dp.callback_query_handler(text='другое')
 async def send_msg_other(call: types.CallbackQuery):
     await call.message.answer(
@@ -260,7 +276,7 @@ async def send_msg_other(call: types.CallbackQuery):
     await call.answer()
 
 
-@ dp.callback_query_handler(text_contains='w')
+@dp.callback_query_handler(text_contains='w')
 async def send_date(call: types.CallbackQuery):
     user_data['size_cell'] = call.data
     buttons = [
@@ -274,7 +290,7 @@ async def send_date(call: types.CallbackQuery):
     await call.answer()
 
 
-@ dp.callback_query_handler(text_contains='a')
+@dp.callback_query_handler(text_contains='a')
 async def choice_month(call: types.CallbackQuery):
     user_data['rent'] = call.data
     month = re.findall(r'\d+', call.data)
@@ -284,6 +300,11 @@ async def choice_month(call: types.CallbackQuery):
     else:
         price_one_month = ((int(*size) - 1) * 150) + 599
     total_price = price_one_month * int(*month)
+
+    keyboard_reg = types.ReplyKeyboardMarkup(row_width=2, resize_keyboard=True, one_time_keyboard=True)
+    key = types.KeyboardButton(text="Регистрация")
+    keyboard_reg.add(key)
+
     period_days = int(*month)*30.5
     user_data['period_days'] = period_days
     user_data['total_price'] = total_price
@@ -304,8 +325,66 @@ async def choice_month(call: types.CallbackQuery):
             fmt.text(f"\nСрок аренды:   {int(*month)} месяцев"),
             fmt.text(f"\nПо адресу:   {user_data['adress']}"),
             fmt.text(f"\nСтоимость итого:   {total_price} рублей"), sep="\n",
-        ), reply_markup=keyboard)
+        ), reply_markup=keyboard,
+    )
+    await bot.delete_message(call.from_user.id, call.message.message_id)
+    await bot.send_message(call.from_user.id, "Для продолжения пройдите регистрацию")
     await call.answer()
+
+
+@dp.message_handler(text="Регистрация")
+async def registration(message: types.Message):
+    keyboard_ok = types.ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=True)
+    key = types.KeyboardButton(text='Согласен')
+    keyboard_ok.add(key)
+    await bot.send_message(
+        message.from_user.id,
+        "Ознакомьтесь с согласием на обработку персональных данных. ФАЙЛ",
+        reply_markup=keyboard_ok,
+    )
+
+
+@dp.message_handler(state=None)
+async def begin(message: types.Message):
+    if message.text == 'Согласен':
+        await FsmAdmin.first_name.set()
+        await bot.send_message(message.from_user.id, 'Укажите имя')
+
+
+@dp.message_handler(state=FsmAdmin.first_name, regexp='[А-Яа-я]')
+async def first_name(message: types.Message, state: FSMContext):
+    async with state.proxy() as data:
+        data["first_name"] = message.text
+    await FsmAdmin.next()
+
+    await bot.send_message(message.from_user.id, 'Укажите фамилию')
+
+
+@dp.message_handler(state=FsmAdmin.last_name, regexp='[А-Яа-я]')
+async def first_name(message: types.Message, state: FSMContext):
+    async with state.proxy() as data:
+        data["last_name"] = message.text
+    await FsmAdmin.next()
+    await bot.send_message(message.from_user.id, 'Укажите email')
+
+
+@dp.message_handler(state=FsmAdmin.email, regexp='[\w\.-]+@[\w\.-]+(\.[\w]+)+')
+async def first_name(message: types.Message, state: FSMContext):
+    async with state.proxy() as data:
+        data["email"] = message.text
+    await FsmAdmin.next()
+    await message.answer('Укажите passport')
+
+
+@dp.message_handler(state=FsmAdmin.passport, regexp='[\d+]')
+async def first_name(message: types.Message, state: FSMContext):
+    async with state.proxy() as data:
+        data["passport"] = message.text
+    await FsmAdmin.next()
+    await bot.delete_message(message.from_user.id, message.message_id)
+    await bot.send_message(message.from_user.id, '...!!')
+
+
 
 
 @ dp.callback_query_handler(text='Забронировать')
@@ -372,6 +451,9 @@ async def send_qrcode(call: types.CallbackQuery):
     await bot.send_photo(chat_id=call.message.chat.id, photo=photo)
     await call.answer()
 
+if __name__ == '__main__':
+   executor.start_polling(dp, skip_updates=True)
 
-class Command(BaseCommand):
-    executor.start_polling(dp, skip_updates=True)
+
+# class Command(BaseCommand):
+#     executor.start_polling(dp, skip_updates=True)
