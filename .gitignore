@@ -99,6 +99,7 @@ Thumbs.db
 .DS_Store
 probe.py
 probe2.py
+dev.py
 bot_project.py
 
 # config  files
