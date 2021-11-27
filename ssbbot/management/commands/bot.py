@@ -420,7 +420,7 @@ async def precheck(pre_checkout_query: types.PreCheckoutQuery):
 @dp.message_handler(content_types=ContentType.SUCCESSFUL_PAYMENT)
 async def process_buynd(message: types.Message):
     if message.successful_payment.invoice_payload == 'some-invoice':
-        await bot.send_message(message.from_user.id, 'Готово деньги получены, можете идти!!')
+        await bot.send_message(message.from_user.id, 'Готово, деньги получены, можете идти!!')
 
 
 @dp.message_handler(state=None)
@@ -463,7 +463,7 @@ async def first_name(message: types.Message, state: FSMContext):
 
 
 @dp.message_handler(state=FsmAdmin.last_name)
-async def first_name(message: types.Message, state: FSMContext):
+async def last_name(message: types.Message, state: FSMContext):
     name = re.findall(r"\b[А-Яа-я]{1,15}\b", message.text, flags=re.I)
     if not name:
         await bot.send_message(message.from_user.id,
@@ -481,7 +481,7 @@ async def first_name(message: types.Message, state: FSMContext):
 
 
 @dp.message_handler(state=FsmAdmin.phone)
-async def first_name(message: types.Message, state: FSMContext):
+async def phone(message: types.Message, state: FSMContext):
     phone = re.findall(r"[\d+]{10}", message.text, flags=re.I)
     if not phone:
         await message.answer('Используйте только цифры')
@@ -492,8 +492,8 @@ async def first_name(message: types.Message, state: FSMContext):
         await message.answer('Укажите номер паспорта в формате: ХХХХ ХХХХХХ')
 
 
-@dp.message_handler(state=FsmAdmin.pasport)
-async def first_name(message: types.Message, state: FSMContext):
+@dp.message_handler(state=FsmAdmin.passport)
+async def passport(message: types.Message, state: FSMContext):
     passp = re.findall(r"[\d+]{4}\s[\d+]{6}", message.text, flags=re.I)
     if not passp:
         await message.answer('Укажите номер паспорта в формате: ХХХХ ХХХХХХ')
@@ -505,7 +505,7 @@ async def first_name(message: types.Message, state: FSMContext):
 
 
 @dp.message_handler(state=FsmAdmin.born)
-async def first_name(message: types.Message, state: FSMContext):
+async def born(message: types.Message, state: FSMContext):
     await bot.send_message(message.from_user.id, message.text)
     born = re.findall(r"[\d+]{2}.[\d+]{2}.[\d+]{4}", message.text, flags=re.I)
     if not born:
